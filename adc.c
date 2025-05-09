@@ -66,12 +66,6 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void lcd_enable(void) ;
-void lcd_data(unsigned char);
-void lcd_cmd(unsigned char);
-void lcd_init(void);
-void lcd_displayString(int, int, unsigned char*);
-void lcd_clear(void);
 /* USER CODE END 0 */
 
 /**
@@ -81,8 +75,6 @@ void lcd_clear(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
-	unsigned char buf[16];
 	unsigned int val = 0;
 
   /* USER CODE END 1 */
@@ -108,12 +100,6 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
-
-	lcd_init();
-
-	lcd_clear();
-
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -125,11 +111,6 @@ int main(void)
 	  if(HAL_ADC_PollForConversion(&hadc1,10)==HAL_OK)
 	  {
 		  val=(int)HAL_ADC_GetValue(&hadc1);
-		  sprintf(buf, "%d",val);
-
-
-			lcd_clear();
-			lcd_displayString(1,1,buf);
 			printf("%d\n", val);
 	  }
 	  HAL_ADC_Stop(&hadc1);
@@ -286,106 +267,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void lcd_enable(void)
-{
-	GPIOH->BSRR = (1<<1) ;
-	HAL_Delay(1);
-	GPIOH->BSRR = (1<<1) << 16 ;
-	HAL_Delay(1);
-}
-
-
-void lcd_data(unsigned char data)
-{
-	 //	 RS = 1 for LCD data
-	 GPIOD->BSRR = (1<<10) ;
-
- 	//D5 If data exists SET else RESET
-	 GPIOE->BSRR = (data & 0x01) ? (1<<11) : ((uint32_t)(1<<11) << 16);
-	 GPIOE->BSRR = (data & 0x02) ? (1<<12) : ((uint32_t)(1<<12) << 16);
-	 GPIOE->BSRR = (data & 0x04) ? (1<<13) : ((uint32_t)(1<<13) << 16);
-	 GPIOE->BSRR = (data & 0x08) ? (1<<14) : ((uint32_t)(1<<14) << 16);
-	 GPIOE->BSRR = (data & 0x10) ? (1<<15) : ((uint32_t)(1<<15) << 16);
-	 GPIOD->BSRR = (data & 0x20) ? (1<<7) : ((uint32_t)(1<<7) << 16);
-	 GPIOD->BSRR = (data & 0x40) ? (1<<8) : ((uint32_t)(1<<8) << 16);
-	 GPIOD->BSRR = (data & 0x80) ? (1<<9) : ((uint32_t)(1<<9) << 16);
-
-	 lcd_enable();
-}
-
-void lcd_cmd(unsigned char cmd)
-{
-	 //RS=0 for LCD command
-	 GPIOD->BSRR = (1<<10) << 16 ;
-
-	 GPIOE->BSRR = (cmd & 0x01) ? (1<<11) : ((uint32_t)(1<<11) << 16);
-	 GPIOE->BSRR = (cmd & 0x02) ? (1<<12) : ((uint32_t)(1<<12) << 16);
-	 GPIOE->BSRR = (cmd & 0x04) ? (1<<13) : ((uint32_t)(1<<13) << 16);
-	 GPIOE->BSRR = (cmd & 0x08) ? (1<<14) : ((uint32_t)(1<<14) << 16);
-	 GPIOE->BSRR = (cmd & 0x10) ? (1<<15) : ((uint32_t)(1<<15) << 16);
-	 GPIOD->BSRR = (cmd & 0x20) ? (1<<7) : ((uint32_t)(1<<7) << 16);
-	 GPIOD->BSRR = (cmd & 0x40) ? (1<<8) : ((uint32_t)(1<<8) << 16);
-	 GPIOD->BSRR = (cmd & 0x80) ? (1<<9) : ((uint32_t)(1<<9) << 16);
-
-	 lcd_enable();
-}
-
-
-
-void lcd_init(void)
- {
-   // reset GPIO PH1
-   GPIOH->BSRR = (1<<1) << 16 ;
-   // reset all the pins of port E in use
-	GPIOE->BSRR = ((1<<11) | (1<<12) | (1<<13) | (1<<14) | (1<<15)) << 16 ;
-	// reset all bits of port D in use
-	GPIOD->BSRR = ((1<<7) | (1<<8) | (1<<9)) << 16 ;
-
-	lcd_cmd(0x38);						 //8bit use both lines
-	lcd_cmd(0x06);						 //Entry mode
-	lcd_cmd(0x0C);						 //display ON cursor OFF
-	lcd_cmd(0x01);						 //Clear display
-	lcd_cmd(0x80);						 //cursor at 1st line 1st position
- }
-
-
-void lcd_setcursor(unsigned char row,unsigned char pos)
-{
-	lcd_cmd(0x0E);
-
-	if (row == 1)
-		lcd_cmd((pos & 0x0F)|0x80);
-	else if (row == 2)
-		lcd_cmd((pos & 0x0F)|0xC0);
-}
-
-
-
-void lcd_clear(void)
-{
-	 HAL_Delay(1);
-	 lcd_cmd(0x01);
-	 HAL_Delay(1);
-}
-
-void lcd_displayString(int row, int pos, unsigned char* ch)
-{
-	 unsigned char temp;
-
-	if(row==1)
-	{
-		temp = 0x80 | (pos);			 //set cursor at 1st line pos position
-	}
-	else if(row ==2)
-	{
-		temp = 0xC0 | (pos);			//set cursor at 2nd line pos position
-	}
-
-	lcd_cmd(temp);
-
-	while(*ch)							//while data is valid, display the string
-		lcd_data(*ch++);
-}
 
 /* USER CODE END 4 */
 
